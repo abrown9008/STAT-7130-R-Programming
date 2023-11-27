@@ -1,0 +1,362 @@
+---
+title: "An Introduction to Text Mining using R"
+author: "Dr Austin R Brown"
+institute: "Kennesaw State University"
+format: beamer
+execute: 
+  echo: TRUE
+  include: TRUE
+  warning: FALSE
+  message: FALSE
+  tidy: FALSE
+---
+
+## Introduction
+
+- When we think of statistics and data science, a lot of times we think about quantitative data.
+
+\vskip 0.10 in
+
+- However, more and more, rich sources of useful data take the form of unstructrured strings of text.
+
+\vskip 0.10 in
+
+- For instance, customer reviews or student evaluations or reflections are really useful, informative pieces of information.
+    - But these are not numbers. These are strings of text!
+    
+## Introduction
+
+- There are a growing number of ways to analyze these types of data including things like natural language processing (NLP) and large language models (LLMs).
+
+\vskip 0.10 in
+
+- Another way of exploring and analyzing textual data is through a general method called \textit{\underline{text mining}}.
+
+\vskip 0.10 in
+
+- I like to think of text mining as a "quick and dirty" alternative to traditional qualitative data analysis.
+
+## Example Data
+
+- As we've been using a few times this semester, \texttt{theoffice} dataset from the \texttt{schrute} package contains text data, which we can mine!
+
+\scriptsize
+```{r}
+library(tidyverse)
+library(schrute)
+data('theoffice')
+theoffice |>
+  select(text) |>
+  head(5)
+```
+\normalsize
+
+## Organizing the Data
+
+- We discussed earlier in the semester the concept of "tidy" data where:
+    1. Each variable is a column
+    2. Each row is an observation
+    3. Each cell represents or contains a value
+    
+\vskip 0.10 in
+
+- The way the data are organized at present doesn't allow for the traditional type of analysis, so we need to tidy it up in such a way that does.
+
+\vskip 0.10 in
+
+- For us, this means \textit{tokenizing} the text.
+
+## Organizing the Data
+
+- Through tokenization, what we are doing is considering each word (could be more than one word but traditionally one word) as its own row.
+
+\vskip 0.10 in
+
+- Consider the below string of text:
+
+```{r}
+text_string <- tibble(
+  text="Identity theft is not a joke, Jim!"
+  )
+```
+
+## Organizing the Data
+
+- We can break this sentence down into individual rows by using the \texttt{unnest\_tokens} function within the \texttt{tidytext} package:
+
+```{r}
+library(tidytext)
+text_string |>
+  unnest_tokens(word,text)
+```
+
+## Organizing the Data
+
+- Let's tokenize the season 7 dialogue:
+
+\scriptsize
+```{r}
+s7 <- theoffice |>
+  filter(season == 7) |>
+  select(text) |>
+  unnest_tokens(word,text)
+
+s7 |>
+  head()
+```
+\normalsize
+
+## Organizing the Data
+
+- Okay cool! But we have another problem.
+
+\vskip 0.10 in
+
+- As you may notice, while we have the data in a nice tidy format, we have a lot of information that isn't really relevant.
+
+\vskip 0.10 in
+
+- For example, it probably isn't pertinent for us to know how many times the words "the," "or," "we," or "and" are used.
+    - These are called \textit{stop words}. We typically want to remove stop words from our data prior to analysis.
+    
+\vskip 0.10 in
+
+- We can do this using a dataset called \texttt{stop\_words} which is part of the \texttt{tidytext} package.
+    - However, there actually exist several stop word datasets, many of which are contained in the \texttt{stopwords} package in R. We can join these separate datasets to make a larger stop words collection:
+    
+## Organizing the Data
+
+```{r}
+library(stopwords)
+
+data("stop_words")
+data("data_stopwords_smart")
+data("data_stopwords_snowball")
+data("data_stopwords_stopwordsiso")
+
+## Join all into one big dataset ##
+
+stoppr <- tibble(word = c(data_stopwords_smart$en,
+                          data_stopwords_snowball$en,
+                          data_stopwords_stopwordsiso$en)
+) |>
+  distinct()
+```
+
+
+## Organizing the Data
+
+- Notice below, when we perform the anti join to remove the stop words, some of the words that were present at the beginning of the last dataset have been removed here:
+
+\scriptsize
+```{r}
+s7_stop <- s7 |>
+  anti_join(stoppr)
+
+s7_stop |>
+  head()
+```
+\normalsize
+
+## Organizing the Data
+
+- Another issue we sometimes encounter with text data is when words with the same root exist.
+    - For example, "fishing," "fished," and "fisher" all have the same root of "fish".
+    
+\vskip 0.10 in
+
+- The process of reducing these similar variations of words to their common root is called \textit{word stemming}.
+
+\vskip 0.10 in
+
+- We can use the \texttt{wordStem} function within the \texttt{SnowballC} package to do this for us:
+
+## Organizing the Data
+
+- Notice that word stemming doesn't always do a perfect job which is why I created a separate column for the stemmed words and the unstemmed words.
+
+\scriptsize
+```{r}
+library(SnowballC)
+s7_stop <- s7_stop |>
+  mutate(word2 = wordStem(word))
+
+s7_stop |>
+  head()
+```
+\normalsize
+
+## Analyzing the Data: Frequencies
+
+- A very straightforward question we might have about our data is word frequencies! We already have learned how to use \texttt{dplyr} to figure this out:
+
+```{r}
+s7_stop |>
+  count(word,sort=T) |>
+  head()
+```
+
+## Analyzing the Data: Frequencies
+
+- We have already learned how to generate horizontal, ordered bar charts, so let's do that for the top 10 words!
+
+```{r,eval=F}
+s7_stop |>
+  count(word,sort=T) |>
+  head(10) |>
+  ggplot(aes(x=n,y=reorder(word,n))) +
+  geom_bar(stat='identity',fill='#EDEFE2',
+           color='#2A3C5F') +
+  geom_text(aes(label=n),hjust=1.15,
+            color="#2A3C5F") +
+  labs(x="Word Frequency",
+       y="Word",
+       title="The Office Season 7 Top Words") +
+  theme_minimal()
+```
+
+## Analyzing the Data: Frequencies
+
+```{r,echo=F}
+s7_stop |>
+  count(word,sort=T) |>
+  head(10) |>
+  ggplot(aes(x=n,y=reorder(word,n))) +
+  geom_bar(stat='identity',fill='#EDEFE2',
+           color='#2A3C5F') +
+  geom_text(aes(label=n),hjust=1.15,
+            color="#2A3C5F") +
+  labs(x="Word Frequency",
+       y="Word",
+       title="The Office Season 7 Top Words") +
+  theme_minimal()
+```
+
+## Analyzing the Data: Frequencies
+
+- We can also create word clouds to visualize word frequencies using the \texttt{wordcloud} package!
+
+```{r,eval=F}
+library(wordcloud)
+
+s7_frequencies <- s7_stop |>
+  count(word)
+
+wordcloud(words = s7_frequencies$word,
+          freq = s7_frequencies$n,
+          max.words = 50)
+```
+
+## Analyzing the Data: Frequencies
+
+```{r,echo=F}
+library(wordcloud)
+
+s7_frequencies <- s7_stop |>
+  count(word)
+
+wordcloud(words = s7_frequencies$word,
+          freq = s7_frequencies$n,
+          max.words = 50)
+```
+
+## Analyzing the Data: Sentiment Analysis
+
+- Beyond looking at word frequencies, we may also be interested in the intent or sentiment behind the words.
+
+\vskip 0.10 in
+
+- For example, brands may want to follow social media posts about their company to determine whether what is trending online is positive or negative.
+    - Sony's inability to differentiate between positive and negative online sentiment cost them a good deal with their movie Morbius: <https://screenrant.com/morbius-box-office-flop-theaters-details/>
+    
+\vskip 0.10 in
+
+- Like with stop words, we have to have dictionaries which assign a score or classification to specific words.
+    - The \texttt{tidytext} package contains 3 sentiment dictionaries we can use.
+
+## Analyzing the Data: Sentiment Analysis
+
+- Let's use the Bing sentiment dictionary to determine the top positive and negative words!
+
+\scriptsize
+```{r}
+sentiment <- s7_stop |>
+  select(word) |>
+  inner_join(get_sentiments('bing'))
+
+sentiment |>
+  head()
+```
+\normalsize
+
+## Analyzing the Data: Sentiment Analysis
+
+- We can generate horizontal, ordered bar charts looking at the top positive and negative words!
+
+\scriptsize
+```{r,eval=F}
+sentiment |>
+  group_by(sentiment) |>
+  count(word,sentiment,sort=T) |>
+  ungroup() |>
+  group_by(sentiment) |>
+  slice_max(n,n=10) |>
+  ggplot(aes(x=n,y=reorder(word,n))) +
+  geom_bar(stat='identity',fill='#EDEFE2',
+           color='#2A3C5F') +
+  geom_text(aes(label=n),hjust=1.15,
+            color="#2A3C5F") +
+  facet_wrap(~sentiment,scales='free_y') +
+  labs(x="Word Frequency",
+       y="Word",
+       title="The Office Season 7 Top Words by Sentiment") +
+  theme_minimal()
+```
+\normalsize
+
+## Analyzing the Data: Sentiment Analysis
+
+```{r,echo=F}
+sentiment |>
+  group_by(sentiment) |>
+  count(word,sentiment,sort=T) |>
+  ungroup() |>
+  group_by(sentiment) |>
+  slice_max(n,n=10) |>
+  ggplot(aes(x=n,y=reorder(word,n))) +
+  geom_bar(stat='identity',fill='#EDEFE2',
+           color='#2A3C5F') +
+  geom_text(aes(label=n),hjust=1.15,
+            color="#2A3C5F") +
+  facet_wrap(~sentiment,scales='free_y') +
+  labs(x="Word Frequency",
+       y="Word",
+       title="The Office Season 7 Top Words by Sentiment") +
+  theme_minimal()
+```
+
+## Analyzing the Data: Sentiment Analysis
+
+- We can do something similar with word clouds!
+
+```{r,eval=F}
+library(reshape2)
+sentiment |>
+  count(word, sentiment, sort = TRUE) |>
+  acast(word ~ sentiment, value.var = "n", fill = 0) |>
+  comparison.cloud(colors = c("gray20", "pink"),
+                   max.words = 100,
+                   title.size=2)
+```
+
+## Analyzing the Data: Sentiment Analysis
+
+```{r,echo=F}
+library(reshape2)
+sentiment |>
+  count(word, sentiment, sort = TRUE) |>
+  acast(word ~ sentiment, value.var = "n", fill = 0) |>
+  comparison.cloud(colors = c("gray20", "pink"),
+                   max.words = 100,
+                   title.size=2)
+```
