@@ -1,0 +1,434 @@
+---
+title: "Relational Data with dplyr"
+author: "Dr. Austin Brown"
+institute: "Kennesaw State University"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,message=F,warning=F,tidy=F)
+```
+
+## Table of Contents
+
+1. Introduction
+2. Mutating Joins
+3. Filtering Joins
+4. Set Operations
+
+## Introduction
+
+```{r,include=FALSE}
+library(tidyverse)
+flights <- nycflights13::flights
+airports <- nycflights13::airports
+planes <- nycflights13::planes
+weather <- nycflights13::weather
+airlines <- nycflights13::airlines
+```
+
+- In most organizations, it is very rare that you will find all of the data you'll need to perform your job in a single data table.
+
+\vskip 0.10 in
+
+- Most of the time, the data that we need in order to perform whatever analysis will be located in disparate, but related tables. 
+
+\vskip 0.10 in
+
+- Because of this, one of the key skills we need to know is how to merge or join tables together in order to have the correct data to answer the relevant research questions at hand. 
+
+## Introduction
+
+- In mostly all modern organizations, data is stored in what is referred to as a "Relational Database Management System (RDMS)." 
+
+\vskip 0.10 in
+
+- At a very basic level, an RDMS is a series of interrelated data tables which are connected by one or more columns called \textit{keys}. 
+
+\vskip 0.10 in
+
+- A key is a unique identifier of a particular observation (think customer ID or Social Security Number).
+
+## Introduction
+
+```{r,out.height="75%",out.width="80%",fig.align='center'}
+knitr::include_graphics("NYCFlightsRDBMS.jpg")
+```
+
+## Introduction
+
+- As we can maybe see in the previous figure, we have two different types of keys:
+
+\vskip 0.05 in
+
+1. A primary key, which is a variable or set of variables which uniquely identify an observation \textit{in its own table}.
+    - Primary keys which require more than one column/variable are called \textbf{compound keys}.
+    
+\vskip 0.05 in
+    
+  - For example, in the RDBMS described before, \texttt{airlines\$carrier} is the primary key in its table.
+        
+\vskip 0.05 in
+    
+2. A foreign key is a variable (or set of variables) that corresponds to a primary key in a different table.
+    
+\vskip 0.05 in
+    
+  - Here, the \texttt{flights\$tailnum} is a foreign key because it matches each flight to a unique airplane (i.e., \texttt{planes\$tailnum} is the primary key). \texttt{flights\$origin} and \texttt{flights\$dest} are also examples of foreign keys. 
+  
+## Introduction
+
+- How can we be confident our primary key really is uniquely identifying each observation in our dataframe?
+
+\vskip 0.10 in
+
+- For example, \texttt{airports\$faa} is a primary key.
+
+```{r,include=TRUE,echo=TRUE}
+airports |>
+  count(faa) |>
+  filter(n > 1)
+```
+
+## Introduction
+
+- On occasion, we may know that each row of a table is indeed a unique observation, but there may not exist a single column which contains a unique value for that row (i.e., no obvious primary key).
+
+\vskip 0.10 in
+
+- In situations like this, we can create a pseudo-primary key or a \textit{surrogate} key by simply creating a new column that is simply the row number. Another trick could be concatenating two columns which together create a unique value.
+
+## Introduction
+
+```{r,include=TRUE,echo=TRUE}
+## Check: Are all the rows in Weather Unique? ##
+weather |>
+  distinct() |>
+  count()
+## Yep! Create Surrogate Key ##
+weather <- weather |>
+  mutate(ID = row_number(),
+         .before=1)
+```
+
+## Mutating Joins
+
+- For those of you familiar with SQL, a mutating join is like a horizontal join or a type of \texttt{merge} for those familiar with the Base R function.
+
+\vskip 0.10 in
+
+- We learned in last class that \texttt{mutate} creates new columns in our dataframe. Similarly, a mutating join will create a new dataframe from two existing dataframes, joining them row-wise by matching the keys. 
+
+\vskip 0.10 in
+
+- There are a few different mutating or horizontal joins we should be aware of that can help in various situations. 
+
+## Mutating Joins
+
+- Joins can be complicated, so to understand what each does, it can be helpful to use simple examples and visual aids to assist in our understanding. Let's looks at two simple dataframes:
+
+```{r,include=TRUE,echo=FALSE}
+x <- tribble(
+  ~key,~val_x,
+  1, "x1",
+  2, "x2",
+  3, "x3")
+y <- tribble(
+  ~key,~val_y,
+  1,"y1",
+  2,"y2",
+  4,"y3"
+)
+x
+y
+```
+
+## Mutating Joins
+
+- One type of mutating join is called an "inner join." When we perform an inner join, the resulting dataframe will only contain those rows whose keys match:
+
+```{r,include=TRUE,echo=TRUE}
+x |>
+  inner_join(y,by="key")
+```
+
+## Mutating Joins
+
+- Visually:
+
+```{r,out.width="85%",out.height="50%",fig.align='center'}
+knitr::include_graphics("innerjoin.jpg")
+```
+
+## Mutating Joins
+
+- As shown, an inner join only retains those rows whose keys match across both dataframes. In other words, there's a strong likelihood rows will be omitted from the outputted dataframe. 
+
+\vskip 0.10 in
+
+- Because of this property, it is more common to perform an outer join, of which there are three:
+
+    1. \texttt{left\_join} 
+    2. \texttt{right\_join}
+    3. \texttt{full\_join}
+    
+## Mutating Joins
+
+- Outer joins, unlike inner joins, will retain rows. But this depends on the type of outer join specified. 
+
+\vskip 0.10 in
+
+- A \texttt{left\_join} will retain all of the rows in the first specified dataframe, and put \texttt{NA} values in the unmatched rows.
+
+```{r,include=TRUE,echo=TRUE}
+x |> 
+  left_join(y,by="key")
+```
+
+## Mutating Joins
+
+```{r,out.width="85%",out.height="50%",fig.align='center'}
+knitr::include_graphics("leftjoin.jpg")
+```
+
+## Mutating Joins
+
+- A \texttt{right\_join} does just the opposite. It will retain all the rows in the dataframe included in the \texttt{right\_join} function.
+
+```{r,include=TRUE,echo=TRUE}
+x |> 
+  right_join(y,by="key")
+```
+
+## Mutating Joins
+
+```{r,out.width="85%",out.height="50%",fig.align='center'}
+knitr::include_graphics("rightjoin.jpg")
+```
+
+## Mutating Joins
+
+- A \texttt{full\_join} retains the rows in both dataframes:
+
+```{r,include=TRUE,echo=TRUE}
+x |> 
+  full_join(y,by="key")
+```
+
+## Mutating Joins
+
+```{r,out.width="85%",out.height="50%",fig.align='center'}
+knitr::include_graphics("fulljoin.jpg")
+```
+
+## Mutating Joins
+
+```{r,include=FALSE,echo=FALSE}
+x <- tribble(
+  ~key,~val_x,
+  1,"x1",
+  2,"x2",
+  2,"x3",
+  1,"x4"
+)
+y <- tribble(
+  ~key,~val_y,
+  1,"y1",
+  2,"y2"
+)
+```
+
+- All of the simple examples we've gone through to this point have assumed that each row in both of our dataframes have unique keys. Sometimes, this isn't the case. 
+
+\vskip 0.10 in
+
+- If we attempt a horizontal join where one or both of the dataframes have duplicate keys, the resulting table will contain all unique combinations of rows. 
+
+\vskip 0.10 in
+
+- On the following slides, one table has duplicate keys, but the other doesn't (i.e., a one-to-many relationship exists).
+
+
+## Mutating Joins
+
+```{r,include=TRUE,echo=TRUE}
+x
+y
+```
+
+## Mutating Joins
+
+```{r,include=TRUE,echo=TRUE}
+left_join(x,y,by="key")
+```
+
+## Mutating Joins
+
+- Now, when both tables have duplicate keys, we will again get all unique combinations of rows (a Cartesian product).
+
+```{r,include=TRUE,echo=TRUE,warning=FALSE,message=FALSE,tidy=FALSE}
+x <- tribble(~key,~val_x,1,"x1",2,"x2",2,"x3",3,"x4")
+y <- tribble(~key,~val_y,1,"y1",2,"y2",2,"y3",3,"y4")
+```
+
+## Mutating Joins
+
+```{r,include=TRUE,echo=TRUE,warning=FALSE,message=FALSE,tidy=FALSE}
+left_join(x,y,by="key")
+```
+
+## Mutating Joins
+
+- Let's look at a couple of more complicated examples. Let's say we want to append the full name of the destination airport to the full flights dataframe. 
+
+\vskip 0.10 in
+
+- Obviously, we want keep the full number of rows in the flights dataframe, but just want the full airport name to be an additional column.
+
+
+## Mutating Joins
+
+- One cool feature about these mutating joins that are similar to PROC SQL/SQL is the ability to perform "natural joins."
+
+\vskip 0.10 in
+
+- A natural join is one where the join is based on all columns with the same name in the two dataframes being joined.
+
+\vskip 0.10 in
+
+- Let's say we want to join the weather data to the \texttt{flights2} dataframe we just created.
+
+## Mutating Joins
+
+- One word of caution about natural joins:
+
+\vskip 0.10 in
+
+- While natural joins can be handy when joining on several conditions, we have to make sure that thoses columns with the same names contain the same data.
+
+\vskip 0.10 in
+
+- For example, if we have two columns both named "name," this might not mean the same thing in both dataframes.
+
+\vskip 0.10 in
+
+- Additionally, this is a good reminder to have clear naming conventions for variables.
+
+## Filtering Joins
+
+- As we learned in last class, filtering is the action we perform upon the rows of a dataframe.
+
+\vskip 0.10 in
+
+- Similarly, sometimes we need to join two tables vertically (i.e., adds rows/observations) instead of horizontally (i.e., adding columns).
+
+\vskip 0.10 in
+
+- \texttt{dplyr} allows for these types of joins through the use of \texttt{semi\_join} and \texttt{anti\_join}.
+
+## Filtering Joins
+
+- A \texttt{semi\_join} will keep all the rows in the first specified dataframe that have a match in the second specified dataframe.
+
+\vskip 0.10 in
+
+- So let's say we are interested in seeing what the top 10 destinations are for NYC flights and we want to see what flights went to those specific destinations.
+
+## Filtering Joins
+
+- An \texttt{anti\_join} is somewhat the opposite of a \texttt{semi\_join}. Instead of including only those matching rows in both dataframes, it will omit those rows in the first specified dataframe which match in the second specified dataframe. 
+
+\vskip 0.10 in
+
+- A really handy application of this is in sentiment analysis (which is actually pretty easy to do using the \texttt{tidyverse} functions). If we go through, say consumer reviews, we only want to include those words which aren't filler words like "a, an, the, and, of" and so on, we can use an \texttt{anti\_join} to remove those words from our list of other words. 
+
+\vskip 0.10 in
+
+- With the flights data, let's say we want to see how many flights don't have the airplane tailnumbers which match in the \texttt{planes} dataframe.
+
+## Set Operations 
+
+- The last type of joins are called "set operations" which you may be familiar with if you work with SQL. 
+
+\vskip 0.10 in
+
+- These operations are most useful in R when you have two dataframes with identical columns which need to be "stacked" (or "row binded" for you base R lovers) on top of each other, but perhaps with some conditions.
+
+## Set Operations
+
+- There are three main set operations in the \texttt{dplyr} package:
+
+\vskip 0.10 in
+
+- \texttt{intersect} only returns the rows which appear in both dataframes
+
+\vskip 0.10 in
+
+- \texttt{union} returns \underline{unique} rows in both dataframes 
+
+\vskip 0.10 in
+
+- \texttt{setdiff} returns only those observations appearing in the first specified dataframe, but not the second
+
+## Set Operations
+
+- An example of an \texttt{intersect} operation:
+
+```{r,inclued=TRUE,echo=TRUE}
+df1 <- tribble(~x,~y,1,1,2,1)
+df2 <- tribble(~x,~y,1,1,1,2)
+intersect(df1,df2)
+```
+
+## Set Operations 
+
+- An example of an \texttt{union} operation:
+
+```{r,inclued=TRUE,echo=TRUE}
+union(df1,df2)
+```
+
+## Set Operations
+
+- An example of a \texttt{setdiff} operation:
+
+```{r,inclued=TRUE,echo=TRUE}
+setdiff(df1,df2)
+```
+
+
+## Final Notes
+
+- Now, all of these operations we've talked about are useful in the various circumstances where they can be applied.
+
+\vskip 0.10 in
+
+- However, there may be some instances when you need to just stack two dataframes on top of each other regardless if the rows match or now. 
+
+\vskip 0.10 in
+
+- You have a few options available to you for such an operation.
+
+## Final Notes
+
+- \texttt{union\_all}
+
+```{r,inclued=TRUE,echo=TRUE}
+union_all(df1,df2)
+```
+
+## Final Notes
+
+- \texttt{bind\_rows}
+
+```{r,inclued=TRUE,echo=TRUE}
+bind_rows(df1,df2)
+```
+
+## Final Notes
+
+- \texttt{rbind.data.frame}
+
+```{r,inclued=TRUE,echo=TRUE}
+rbind.data.frame(df1,df2)
+```

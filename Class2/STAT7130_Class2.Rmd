@@ -1,0 +1,390 @@
+---
+title: "Data Transformation using dplyr"
+author: "Dr. Austin Brown"
+institute: "Kennesaw State University"
+date: "8/23/2021"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,warning=FALSE,message=FALSE,tidy=FALSE)
+```
+
+## Table of Contents 
+
+1. Filtering Rows
+2. Arranging Rows
+3. Selecting Columns
+4. Creating New Variables with \texttt{mutate()}
+5. Grouped Summaries with \texttt{summarize()}
+
+
+## Introduction
+
+- One of the most important aspects of a data analyst/scientist/applied statistician's job is getting the right data into the right format in order for it to be appropriately analyzed. 
+
+\vskip 0.10 in
+
+- For example, we may only need to work with a subset of rows which meet certain condition(s). 
+
+\vskip 0.10 in
+
+- While there are multiple ways to subset/transform data using R, the modern approach frequently employs a \texttt{tidyverse} package called "\texttt{dplyr}."
+
+## Filtering Rows
+
+- We learned in the last class how to filter rows based on a single condition using \texttt{dplyr::filter()}. For today, let's use the \texttt{nycflights13::flights} dataframe. This dataframe contains lots of information about flights departing NYC in 2013.
+
+
+```{r}
+
+flights <- nycflights13::flights
+
+```
+
+## Filtering Rows
+
+- Now, let's say I just want to focus my attention on those which departed in January. To do this, I can use the code below:
+
+```{r}
+library(tidyverse)
+
+jan_flights <- flights %>%
+  dplyr::filter(month == 1)  
+
+```
+
+## Filtering Rows
+
+- Okay, this is straightforward enough, but what if we wanted to select all flights on a particular day of the year? Say Fourth of July?
+
+\vskip 0.10 in
+
+- Notice here, the comma serves as a sort of "and" operator. If we use "and" then this means that \texttt{filter} will only select those rows which meet \textit{\underline{both}} conditions. 
+
+```{r}
+foj_flights <- flights %>%
+  dplyr::filter(month == 7,day == 4)
+```
+
+
+## Filtering Rows
+
+- Obviously, there are likely instances when the comparison we're wanting to make isn't just equals (\texttt{==}). R offers all of the main comparison operators that come standard in any type of programming language:
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|c|l|}
+  \hline
+  \text{Symbol} & \text{Comparison} \\
+  \hline
+  \texttt{>} & \text{Greater Than} \\
+  \texttt{<} & \text{Less Than} \\
+  \texttt{>=} & \text{Greater Than or Equal to} \\
+  \texttt{<=} & \text{Less Than or Equal to} \\
+  \texttt{!=} & \text{Not Equal to} \\
+  \texttt{==} & \text{Equal to} \\
+  \hline
+  \end{tabular}
+\end{table}
+
+## Filtering Rows
+
+- As shown in the Fourth of July example, we also have logical operators, like "and," "or" and "not." 
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|c|c|l|}
+  \hline
+  \text{Symbol} & \text{Operator} & \text{Example} \\
+  \hline
+  \texttt{\&} & \text{And} & \text{\texttt{month == 7 \& month == 4}} \\
+  \texttt{|} & \text{Or} & \text{\texttt{month == 1 | month == 2 | month == 3}} \\
+  \texttt{!} & \text{Not} & \text{\texttt{month != 2}} \\
+  \hline
+  \end{tabular}
+\end{table}
+
+## Filtering Rows
+
+- So let's look at some examples of using this in action. Let's say I want to track flights over the holiday season so I want to filter just those flights who departed in November or December. There are a couple of different approaches:
+
+```{r}
+holiday_cheer <- flights %>%
+  dplyr::filter(month == 11 | month == 12)
+
+holiday_cheer1 <- flights %>%
+  dplyr::filter(month %in% c(11,12))
+
+```
+
+## Filtering Rows
+
+- We could also use some of our comparison operators. Perhaps we want to see which flights had either a 2+ hour arrival delay or a 2+ hour departure delay.
+
+```{r}
+
+late_flights <- flights %>%
+  dplyr::filter(arr_delay >= 120 | dep_delay >= 120)
+
+late_flights1 <- flights %>%
+  dplyr::filter(!(arr_delay < 120 & dep_delay < 120))
+
+```
+
+## Filtering Rows
+
+- Obviously to this point, we've been filtering based on numeric values, but there are likely lots of instances when we'd want to filter based on character/categorical variables, too. Let's say we want to filter those rows which had flights that left in April and had destinations of DEN, ATL, and DFW. 
+
+```{r}
+
+new_df <- flights %>%
+  dplyr::filter(month == 4 & 
+                dest %in% c("ATL","DEN","DFW"))
+
+```
+
+## Filtering Rows
+
+- Sometimes when you're doing more complex filtering, it can be useful to separate out each filtering operation, just to keep it clear to you what's going on. So in the previous example, we can call two \texttt{dplyr::filter} functions and pipe (\texttt{%>%}) them together. This may make things easier down the road, especially if debugging is necessary.
+
+```{r}
+
+new_df1 <- flights %>%
+  dplyr::filter(month == 4) %>%
+  dplyr::filter(dest %in% c("ATL","DEN","DFW"))
+
+```
+
+## Filtering Rows
+
+- One thing that is important to point out is how \texttt{filter} handles \texttt{NA} values. By default, whatever logical argument you've entered into the \texttt{filter} function, it will return only those rows for which the argument is TRUE. \texttt{NA} values will not be returned unless you explicitly ask for them.
+
+```{r}
+## Won't Return NA ##
+df <- tibble(x = c(1,NA,3))
+df %>% dplyr::filter(x > 1)
+```
+
+## Filtering Rows
+
+```{r}
+## Will Return NA ##
+df %>% dplyr::filter(is.na(x) | x > 1)
+```
+
+
+## Arranging Rows
+
+- In some instances, we may have a need to order or arrange our dataframe. We can do this using \texttt{arrange}. Let's say we want to arrange our rows in descending order by the length of the arrival delay. 
+
+```{r}
+arr_delay_order <- flights %>%
+  dplyr::arrange(desc(arr_delay))
+```
+
+## Arranging Rows
+
+- We can also arrange rows based on multiple columns. Here, the function will arrange on the leftmost column first, and then arrange within the first arranged column. So as a simple example:
+
+```{r}
+ex <- tibble(x = c(0,12,40,13,60,55), 
+             y = c("A","A","B","B","C","C"))
+ex %>% dplyr::arrange(x,y)
+```
+
+
+## Arranging Rows
+
+- But if we flip the order, and order y in descending order, we get a different result
+
+```{r}
+ex %>%
+  dplyr::arrange(desc(y),x)
+```
+
+## Selecting Columns 
+
+- We saw last week how we can use the \texttt{select} function to pick out specific columns that we'd like to use for future analysis. For example, if we want to work with just the destination, arrival delay and departure delay columns, we can do so by:
+
+```{r}
+d_a_d <- flights %>%
+  dplyr::select(dest,arr_delay,dep_delay)
+```
+
+## Selecting Columns 
+
+- Now, this method of manually entering column names might not be too bad if we're just selecting a handful of columns. But if we have a really large dataset, this can become quite cumbersome. There are a couple of tricks we can employ that are especially useful if the columns you want (or don't want) appear sequentially in the dataframe:
+
+```{r}
+## Select all columns b/w year and day (inclusive) ##
+y_m_d <- flights %>%
+  dplyr::select(year:day)
+## Select all columns except ymd (inclusive) ##
+ae_ymd <- flights %>%
+  dplyr::select(-(year:day))
+```
+
+## Selecting Columns 
+
+- Suppose we were performing some analysis where we wanted just the numeric or character columns, similar to the \texttt{keep \_NUMERIC\_} call in a SAS data step. 
+
+\vskip 0.10 in
+
+- Like with anything R related, there are different ways of arriving at the same goal. 
+
+```{r}
+num_cols <- flights %>%
+  dplyr::select_if(is.numeric) %>%
+  colnames()
+
+num_dat <- flights %>%
+  dplyr::select(all_of(num_cols))
+
+```
+
+## Selecting Columns
+
+- If our column names follow particular naming conventions, we can use "helper" functions to aid in the selection process:
+- \texttt{starts\_with("abc")} will select columns whose names, you guessed it, start with the character string, "abc"
+- \texttt{ends\_with("xyz")} does the same thing except with those columns whose names end with "xyz"
+- \texttt{matches("arr")} selects those columns whose names match the regular expression specified in the function
+- \texttt{num\_range("x",1:3)} will select those columns named \texttt{x1}, \texttt{x2}, and \texttt{x3}
+
+## Creating New Variables Using Mutate
+
+- There are many, many times when we need to create a new column that is a function of existing columns, even something as summing two columns. 
+
+\vskip 0.10 in
+
+- For example, in our flights data, we have a variable called \texttt{air\_time}, which is what it sounds like and is recorded in minutes. Suppose we wanted to create a new variable to estimate the average MPH during a particular flight. Well this is where \texttt{mutate} comes into play:
+
+```{r}
+flights1 <- flights %>%
+  dplyr::select(year:day,
+                ends_with("delay"),
+                distance,
+                air_time
+                ) %>%
+  dplyr::mutate(speed = (distance/air_time)*60)
+```
+
+## Create New Variables Using Mutate
+
+- Now, suppose we only want a dataframe consisting of our newly created columns. If we use the \texttt{transmute} function, we can do just that:
+
+```{r}
+new_vars <- flights %>%
+  dplyr::transmute(gain = arr_delay - dep_delay,
+                   hours = air_time/60,
+                   gain_per_hour = gain/hours)
+```
+
+## Create New Variables Using Mutate
+
+- There are several useful functions which can aid in creating new columns. 
+
+\vskip 0.10 in
+
+- Obviously, we have our regular arithmetic operators: +, -, *, /, ^. These can be used in conjunction with other R functions, such as \texttt{mean}, \texttt{sd}, \texttt{max}, \texttt{min}, etc. 
+
+\vskip 0.10 in 
+
+- For example, let's say we want to standardize a variable.
+
+## Create New Variables Using Mutate
+
+```{r,out.width="65%",out.height="65%",fig.align="center"}
+## Positively Skewed Data ##
+set.seed(123)
+pos_skew <- tibble(var = rexp(100))
+hist(pos_skew$var,main="These Data are Positively Skewed")
+```
+
+## Create New Variables Using Mutate 
+
+```{r,out.width="75%",out.height="75%",fig.align="center"}
+stdize <- pos_skew %>%
+  dplyr::mutate(var1 = (var - mean(var))/sd(var))
+hist(stdize$var1,main="These Data are Standardized")
+```
+
+## Grouped Summaries with Summarize
+
+- Many, many times in research or industry scenarios, we are tasked with finding numerical summaries of data, whether those are grouped or otherwise. We can use the \texttt{summarize} function in conjunction with the \texttt{group\_by} function to aid us in these aims. 
+
+\vskip 0.10 in
+
+- Let's say we want to find the mean of the \texttt{dep\_delay} variable.
+
+```{r}
+flights %>%
+  dplyr::summarize(delay = mean(dep_delay,na.rm=T))
+```
+
+## Grouped Summaries with Summarize
+
+- Obviously, this previous example is not terribly efficient because we could easily obtain the same unconditional mean by using \texttt{mean(dep\_delay,na.rm=T)}.
+
+\vskip 0.10 in
+
+- The power of \texttt{summarize} really comes when using it in conjunction with \texttt{group\_by}. For those of you who are old school R users, this is effectively the same as \texttt{aggregate} except a little handier as it can be used with other \texttt{tidyverse} functions in a seamless manner.
+
+\vskip 0.10 in 
+
+- Let's say we want to know the average departure delay by month.
+
+## Grouped Summaries with Summarize
+
+```{r}
+flights %>%
+  dplyr::group_by(month) %>%
+  dplyr::summarize(mean_delay = mean(dep_delay,na.rm=T))
+```
+
+## Grouped Summaries with Summarize
+
+- Now, what's cool about the piping function is that we can do lots of things in a single operation. Maybe we want to see the top five months in terms of longest mean departure delays:
+
+```{r}
+flights %>%
+  dplyr::group_by(month) %>%
+  dplyr::summarize(mean_delay = mean(dep_delay,na.rm=T)) %>%
+  dplyr::arrange(desc(mean_delay)) %>%
+  head(5)
+```
+
+## Grouped Summaries with Summarize
+
+- In another example, there is an extensive repository of baseball data in the \texttt{Lahman} package in R. Using the \texttt{Lahman::Batting} dataset, let's find the number of players in each season since 1990 who have hit more than 50 homeruns. 
+
+\vskip 0.10 in
+
+- In other words, what is the frequency, per year since 1990, of players who hit more than 50 homeruns.
+
+## Grouped Summaries with Summarize
+
+```{r,eval=FALSE}
+bat <- Lahman::Batting 
+bat %>%
+  dplyr::filter(yearID >= 1990) %>% 
+  dplyr::select(yearID,HR) %>%
+  dplyr::filter(HR > 50) %>% dplyr::group_by(yearID) %>%
+  dplyr::summarize(count = n()) %>%
+  dplyr::arrange(desc(count))
+```
+
+## Grouped Summaries with Summarize
+
+- There is a lot of functionality and capability with the \texttt{summarize} function to provide a good deal of information in a cleaner coding format than some other R tricks. 
+
+\vskip 0.10 in
+
+- For example, let's say we want to count up the unique (i.e., distinct) number of airline carriers for a given destination
+
+```{r,eval=FALSE}
+flights %>%
+  dplyr::group_by(dest) %>%
+  dplyr::summarize(carriers = n_distinct(carrier)) %>%
+  dplyr::arrange(desc(carriers))
+```

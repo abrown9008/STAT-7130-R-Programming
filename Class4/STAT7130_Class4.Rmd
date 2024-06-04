@@ -1,0 +1,641 @@
+---
+title: "Introduction to ggplot2"
+author: "Dr. Austin Brown"
+institute: "Kennesaw State University"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(include=TRUE,echo=TRUE,warning=FALSE,message=FALSE,tidy=FALSE)
+```
+
+## Introduction
+
+- You may have heard the old adage, "A picture is worth a thousand words." 
+
+\vskip 0.10 in
+
+- For a statistician/data analyst, this still holds true! 
+
+\vskip 0.10 in
+
+- Graphical representations of data (or "data visualizations") can lead to insights not obvious from a scan of a dataset.
+
+\vskip 0.10 in
+
+- Additionally, graphs are useful in conveying the results of statistical models/tests to people without quantitative training.
+
+## Introduction
+
+- Within R, there are two primary methods for creating graphs: the Base R method and the \texttt{ggplot2} method. We're going to restrict our focus mostly to the latter method.
+
+\vskip 0.10 in
+
+- The "gg" in \texttt{ggplot2} is shorthand for "grammar of graphics." 
+
+\vskip 0.10 in
+
+- It offers an incredible array of options for plotting all sorts of data types (including maps).
+
+\vskip 0.10 in
+
+- We're going to learn how to plot some of the more common graphs as well as get an understanding of some options available to us. Learning to use \texttt{ggplot2} could honestly be a class (or two) by itself, so what we're learning is going to be an introduction, but please know it can be used in many, many ways.
+
+## Creating a ggplot
+
+- Let's check out a basic example. Using the \texttt{mpg} dataframe, suppose we want to explore the relationship between a car's engine displacement (measured in liters) and its highway miles per gallon (mpg).
+
+\vskip 0.10 in
+
+- Since both of these are quantitative variables, the most appropriate plot would be a scatterplot.
+
+## Creating a ggplot
+
+```{r,eval=F}
+library(tidyverse)
+mpg <- ggplot2::mpg
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ,y = hwy))
+```
+
+## Creating a ggplot
+
+```{r,echo=F}
+library(tidyverse)
+mpg <- ggplot2::mpg
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ,y = hwy))
+```
+
+## Creating a ggplot
+
+- The visual characteristics of the objects in our plots are referred to as "aesthetics" (hence the \texttt{aes()} function).
+
+\vskip 0.10 in
+
+- \texttt{aes()} controls lots of different aspects of our plots, including the size, shape, and color of the objects (bars, points, lines, etc) in the plots.
+
+\vskip 0.10 in
+
+- To illustrate, let's say we now want to see the relationship between engine displacement and highway mpg controlling for the type of vehicle (e.g., minivan, compact, etc.)
+
+## Creating a ggplot
+
+```{r,eval=F}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy,
+                           color = class))
+```
+
+## Creating a ggplot
+
+```{r,echo=F}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy, color = class))
+```
+
+## Creating a ggplot 
+
+- Now, we also have options that we can specify outside of the \texttt{aes()} function,including those we can specify inside of the \texttt{aes()} function.
+
+\vskip 0.10 in
+
+- Let's say, for example, that we want the color of our points to be uniformly blue. 
+
+```{r,eval=F}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy),
+             color='blue')
+```
+
+## Creating a ggplot 
+
+```{r,echo=F}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy),
+             color='blue')
+```
+
+## Creating a ggplot
+
+- If we want to have a uniform aesthetic, we have to manually specify it outside of the \texttt{aes()} function with a value that is accepted by the aesthetic.
+
+\vskip 0.10 in
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{|l|c|}
+    \hline
+    \text{Aesthetic} & \text{Input} \\
+    \hline
+    \texttt{color} & \text{Name of color in quotes} \\
+    \texttt{size} & \text{Size of the points in millimeters} \\
+    \texttt{shape} & \text{A number (1-15) that indicates a shape} \\
+    \texttt{alpha} & \text{A number between 0 and 1 that indicates the opacity} \\
+    \hline
+  \end{tabular}
+\end{table}
+
+## Creating a ggplot
+
+```{r,echo=FALSE,fig.align="center"}
+knitr::include_graphics("rshapes.jpg")
+```
+
+## Facets 
+
+- In the last example, we were able to glean new information about our dataset by using the \texttt{aes()} function.
+
+\vskip 0.10 in
+
+- We can also create separate graphs for each level of a categorical variable.
+
+\vskip 0.10 in
+
+- Instead of creating a different dataframe for each level and creating separate graphs, we can take advantage of the \texttt{facet\_wrap} function to have \texttt{ggplot} do the heavy lifting for us.
+
+## Facets 
+
+```{r,eval=F}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_wrap(~class,nrow=2)
+```
+
+## Facets 
+
+```{r,echo=F}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_wrap(~class,nrow=2)
+```
+
+## Facets
+
+- Alternative method of faceting using \texttt{facet\_grid}:
+
+```{r,eval=F}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(drv~cyl)
+```
+
+## Facets 
+
+```{r,echo=F}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x = displ, y = hwy)) +
+  facet_grid(drv~cyl)
+```
+
+## Geometric Objects
+
+- In \texttt{ggplot}, the way that we generate different graphics is by using different \textit{geoms}.
+
+\vskip 0.10 in
+
+- For example, if we wanted to build a histogram, we'd use the histogram geom. If we wanted to build a bar graph, we'd use the bar geom, and so on. 
+
+\vskip 0.10 in
+
+- We can use different geoms on the same data and variables to generate different graphs.
+
+## Geometric Objects
+
+```{r,eval=F}
+ggplot(data=mpg) + 
+  geom_smooth(mapping = aes(x=displ,y=hwy))
+```
+
+## Geometric Objects
+
+```{r,echo=F}
+ggplot(data=mpg) + 
+  geom_smooth(mapping = aes(x=displ,y=hwy))
+```
+
+## Geometric Objects
+
+- One important thing that should be pointed out is that not every aesthetic works with every geom.
+
+\vskip 0.10 in
+
+- For example, this code won't run because the \texttt{shape} aesthetic won't work with the smooth geom.
+
+```{r,eval=F}
+ggplot(data=mpg) +
+  geom_smooth(mapping=aes(x=displ,
+                          y=hwy,
+                          shape=cyl))
+```
+
+## Geometric Objects
+
+- One of the coolest aspects of \texttt{ggplot2} is that we can use multiple geoms together in order to build really nice plots. 
+
+\vskip 0.10 in
+
+- For example, we can use the smooth and points geoms together to make a nice, informative plot.
+
+```{r,eval=F}
+ggplot(data = mpg) +
+  geom_smooth(mapping = aes(x = displ, y = hwy)) +
+  geom_point(mapping = aes(x = displ, y = hwy))
+```
+
+## Geometric Objects
+
+```{r,echo=F}
+ggplot(data = mpg) +
+  geom_smooth(mapping = aes(x = displ, y = hwy)) +
+  geom_point(mapping = aes(x = displ, y = hwy))
+```
+
+## Geometric Objects
+
+- Now, another cool feature of \texttt{ggplot} is the ability to specify global aesthetics in order to cut down on keystrokes:
+
+```{r,eval=F}
+ggplot(data = mpg,aes(x = displ,y=hwy)) +
+  geom_smooth() + 
+  geom_point()
+```
+
+## Geometric Objects
+
+```{r,echo=F}
+ggplot(data = mpg,aes(x = displ,y=hwy)) +
+  geom_smooth() + 
+  geom_point()
+```
+
+## Geometric Objects
+
+- What's happening behind the scenes is that aesthetics specified in the \texttt{ggplot} function are mapped to each of the geoms used in a given plot.
+
+\vskip 0.10 in
+
+- We can specify different options within the various geoms that will only map to those geoms. For example:
+
+```{r,eval=F}
+ggplot(data = mpg,aes(x=displ,y=hwy)) +
+  geom_point(aes(color=class)) +
+  geom_smooth()
+```
+
+## Geometric Objects
+
+```{r,echo=F}
+ggplot(data = mpg,aes(x=displ,y=hwy)) +
+  geom_point(aes(color=class)) +
+  geom_smooth()
+```
+
+## Geometric Objects
+
+- We can also use \texttt{dplyr} functions to help us both at the global level as well as at the geom level.
+
+\vskip 0.10 in
+
+- For example, let's say for our smooth geom, we only want to do that for one of the subcompact vehicle class.
+
+```{r,eval=F}
+ggplot(mpg,aes(x=displ,y=hwy)) +
+  geom_smooth(data = 
+                mpg |>
+                filter(class == "subcompact"),
+              se = FALSE) + 
+  geom_point(aes(color=class))
+```
+
+## Geometric Objects
+
+```{r,echo=F}
+ggplot(mpg,aes(x=displ,y=hwy)) +
+  geom_smooth(data = 
+                mpg |>
+                filter(class == "subcompact"),
+              se = FALSE) + 
+  geom_point(aes(color=class))
+```
+
+## Geometric Objects
+
+- Notice, when we're using \texttt{dplyr} locally, we put it inside of the specific geom. 
+
+\vskip 0.10 in
+
+- If we want to use \texttt{dplyr} globally, we put it \underline{either} inside of the \texttt{ggplot} function, or combining the \texttt{dplyr} function with \texttt{ggplot} using piping.
+
+## Geometric Objects
+
+- Inside of the \texttt{ggplot} function:
+
+```{r,eval=F}
+penguins <- palmerpenguins::penguins
+ggplot(data = 
+         penguins |>
+         filter(island == "Biscoe" &
+                  species == "Gentoo"),
+            aes(x = bill_length_mm,y=bill_depth_mm)) +
+  geom_smooth() +
+  geom_point()
+```
+
+## Geometric Objects
+
+```{r,echo=F}
+penguins <- palmerpenguins::penguins
+ggplot(data = 
+         penguins |>
+         filter(island == "Biscoe" &
+                  species == "Gentoo"),
+            aes(x = bill_length_mm,y=bill_depth_mm)) +
+  geom_smooth() +
+  geom_point()
+```
+
+## Geometric Objects
+
+- Outside of \texttt{ggplot2} altoghether:
+
+```{r,eval=F}
+penguins |>
+  filter(island == "Biscoe" & 
+         species == "Gentoo") |>
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm)) +
+    geom_smooth() + 
+    geom_point()
+```
+
+## Geometric Objects
+
+```{r,echo=F}
+penguins |>
+  filter(island == "Biscoe" & 
+         species == "Gentoo") |>
+  ggplot(aes(x = bill_length_mm, y = bill_depth_mm)) +
+    geom_smooth() + 
+    geom_point()
+```
+
+## Statistical Transformations
+
+- Sometimes when we're wanting to make a graph, we want to plot a statistical summary of a variable instead of its raw value.
+
+\vskip 0.10 in
+
+- This is particularly evident for categorical data. Say, for example, we wanted to plot the frequencies of the levels of a categorical variable in a bar chart. 
+
+\vskip 0.10 in
+
+- Using \texttt{ggplot2::diamonds} dataframe, let's plot a bar chart. 
+
+## Statistical Transformations
+
+```{r,eval=F}
+diamonds <- ggplot2::diamonds
+ggplot(diamonds) +
+  geom_bar(aes(x=cut))
+```
+
+## Statistical Transformations
+
+```{r,echo=F}
+diamonds <- ggplot2::diamonds
+ggplot(diamonds) +
+  geom_bar(aes(x=cut))
+```
+
+## Statistical Transformations
+
+- What you'll notice is that on the y-axis, we have a variable called "count" despite that variable not being in the \texttt{diamonds} dataframe.
+
+\vskip 0.10 in
+
+- This is because behind the scenes, \texttt{ggplot} implicitly understands that we're wanting to plot frequencies. 
+
+\vskip 0.10 in
+
+- This implicit understanding stems from stat functions working in tandem with a particular geom. For the bar geom, it's the \texttt{stat\_count} function.
+
+\vskip 0.10 in
+
+- We can interchange this function for the bar geom and it yields the same result.
+
+## Statistical Transformations
+
+```{r,eval=F}
+ggplot(diamonds) + 
+  stat_count(aes(x=cut))
+```
+
+## Statistical Transformations 
+
+```{r,echo=F}
+ggplot(diamonds) + 
+  stat_count(aes(x=cut))
+```
+
+## Statistical Transformations
+
+- Many times, we don't have to worry about using the stat function because the geom function is clearer as far as code readability goes.
+
+\vskip 0.10 in
+
+- However, there may be instances where we need to override the defaults.
+
+\vskip 0.10 in
+
+- One instance, in the case of bar charts, might be because we already have the data in contingency table form with all the frequencies already tabulated. 
+
+
+## Statistical Transformations 
+
+```{r}
+## Count Up Number of Cuts in Diamonds Dataframe ##
+cuts_df <- diamonds |>
+  group_by(cut) |>
+  count()
+cuts_df
+```
+
+## Statistical Transformations
+
+```{r,eval=F}
+ggplot(cuts_df) +
+  geom_bar(aes(x=cut,y=n),stat="identity")
+```
+
+## Statistical Transformations
+
+```{r,echo=F}
+ggplot(cuts_df) +
+  geom_bar(aes(x=cut,y=n),stat="identity")
+```
+
+## Position Adjustments
+
+- Another cool bit of functionality available in \texttt{ggplot} is the ability to adjust the position of a data point in the context of the graph.
+
+\vskip 0.10 in
+
+- Let's look at a couple of examples using the \texttt{diamonds} dataframe to really see this in play. Let's say we want to create a stacked bar chart where we are comparing the proportion of clarity categories against the levels of diamond cuts:
+
+```{r,eval=F}
+ggplot(diamonds) + 
+  geom_bar(aes(x=cut,fill=clarity))
+```
+
+## Position Adjustments
+
+```{r,echo=F}
+ggplot(diamonds) + 
+  geom_bar(aes(x=cut,fill=clarity))
+```
+
+## Position Adjustments
+
+- What happened? By default, the position argument is set to stack. So if that's what we want, there's nothing else we have to do.
+
+\vskip 0.10 in
+
+- However, there may be instances when we want to change the position argument in order to obtain a different plot. 
+
+\vskip 0.10 in
+
+- For example, typically, a raw stacked bar chart like this where the sample sizes across the levels of our x-axis variable are not equal or pretty imbalanced, a 100\% stacked bar chart might be preferable for comparison purposes.
+
+## Position Adjustments
+
+```{r,eval=F}
+diamonds |>
+  ggplot(aes(x=cut,fill=clarity)) +
+  geom_bar(position="fill")
+```
+
+## Position Adjustments
+
+```{r,echo=F}
+diamonds |>
+  ggplot(aes(x=cut,fill=clarity)) +
+  geom_bar(position="fill")
+```
+
+## Position Adjustments
+
+- Another commonly used type of position adjustment is really useful for generating scatterplots with lots of data points.
+
+\vskip 0.10 in
+
+- When we have a lot of data points that are tightly grouped, they tend to overlap to where not all of the points display. This could potentially lead to incorrect conclusions, especially with respect to observation density.
+
+\vskip 0.10 in
+
+- For the point geom, the default position is "identity." If we change it to "jitter," \texttt{ggplot} adds some random noise to each point so they stop overlapping, but the relationship between the two variables isn't significantly modified.
+
+## Position Adjustments
+
+```{r,eval=F}
+ggplot(mpg,aes(x=displ,y=hwy)) +
+  geom_point(position="jitter")
+```
+
+## Position Adjustments
+
+```{r,echo=F}
+ggplot(mpg,aes(x=displ,y=hwy)) +
+  geom_point(position="jitter")
+```
+
+## Adding Titles and Changing Themes
+
+- One of the characteristics of an effective graph is clear titles. Most graphs ought to stand alone without you being there to explain what everything means. 
+
+\vskip 0.10 in
+
+- So far, we haven't made any modifications to our graph or axes titles. However, we can do this quite easily with the \texttt{labs} function. 
+
+\vskip 0.10 in
+
+- For the plot we just generated, we can see that there is no main title and the axes titles are lower cased. Let's change that.
+
+
+## Adding Titles and Changing Themes
+
+```{r,eval=F}
+mpg |>
+  ggplot(aes(x=displ,y=hwy)) +
+  geom_point(position="jitter") + 
+  labs(x = "Engine Displacement",
+       y = "Highway Miles Per Gallon (MPG)",
+       title = "Engine Displacement vs Highway MPG",
+       subtitle = "An Example of a Scatterplot")
+```
+
+## Adding Titles and Changing Themes
+
+```{r,echo=F}
+mpg |>
+  ggplot(aes(x=displ,y=hwy)) +
+  geom_point(position="jitter") + 
+  labs(x = "Engine Displacement",
+       y = "Highway Miles Per Gallon (MPG)",
+       title = "Engine Displacement vs Highway MPG",
+       subtitle = "An Example of a Scatterplot")
+```
+
+## Adding Titles and Changing Themes
+
+- We also have lots of options for changing the themes of our plots.
+
+\vskip 0.10 in
+
+- Two big reasons why I change themes are: (1) I don't like the gray gridded background and (2) For a lot of academic journals, if you want to print figures in color, they make you pay to include that (it's nuts, I know).
+
+\vskip 0.10 in
+
+- Changing themes is easy! We just add whatever theme we want to our main plot.
+
+## Adding Titles and Changing Themes
+
+```{r}
+## Adding Titles and Changing Themes
+p <- mpg |>
+  ggplot(aes(x=displ,y=hwy)) +
+  geom_point(position="jitter") + 
+  labs(x = "Engine Displacement",
+       y = "Highway Miles Per Gallon (MPG)",
+       title = "Engine Displacement vs Highway MPG",
+       subtitle = "An Example of a Scatterplot")
+```
+
+## Adding Titles and Changing Themes
+
+```{r}
+p + theme_bw()
+```
+
+
+## Adding Titles and Changing Themes
+
+```{r}
+p + theme_classic()
+```
+
+## Adding Titles and Changing Themes
+
+\footnotesize
+```{r}
+library(ggthemes)
+p + theme_wsj()
+```
+\normalsize
+
+## Practice Problem 
+
+- Using the \texttt{Lahman::Batting} dataset, let's plot a bar chart of Austin Riley's hits by category for the 2022 regular season. 
+
+\vskip 0.10 in
+
+- Once we generate this plot, what are a couple of things we could do to improve it? 
