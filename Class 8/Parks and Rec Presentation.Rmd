@@ -1,0 +1,266 @@
+---
+title: "Parks and Recreation Script Analysis"
+author: "Dr. Austin Brown"
+institute: "Kennesaw State University"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T,include=T,warning=F,message=F,tidy=F)
+```
+
+## Introduction
+
+- Originally airing in April 2009 in the mockumentary style of the acclaimed TV show "The Office," NBC's Parks and Recreation has become a popular streaming show in its own right.
+
+\vskip 0.10 in
+
+- The show follows the lives of a group of government employees working in the parks and recreation department of fictitious Indiana city, Pawnee.
+
+\vskip 0.10 in
+
+- The show stars Amy Poehler, Nick Offerman, Aziz Ansari, Chris Pratt, and Aubrey Plaza, among others.
+
+![Parks and Recreation Logo]("Parks and Rec Logo.png")
+
+
+## Introduction
+
+- Using the scripts from every episode, the goals of my analysis were to:
+
+\vskip 0.10 in
+
+1. Visually determine if differences may exist in the number of lines per episode my favorite character Ron Swanson says across the seasons.
+2. Visually compare the average number of lines per episode per season Ron Swanson says.
+3. Determine the top 25 words main character Leslie Knope says each season.
+
+\vskip 0.10 in
+
+- \textit{Let's get started!!}
+
+## Ron Swanson - Number of Lines Per Episode Per Season
+
+```{r,echo=F,include=F}
+
+library(tidyverse)
+
+## Read in the Data ##
+
+library(readxl)
+
+pnr <- read_xlsx("Parks and Rec Scripts Dataset.xlsx")
+
+## Data Integrity Check ##
+
+pnr |>
+  glimpse()
+
+## Create Aggregated Dataset to Count Up Number of Lines 
+## Ron Says Per Episode ##
+
+ron_lines <- pnr |>
+  filter(Character == 'Ron Swanson') |>
+  group_by(Season,Episode) |>
+  count() |>
+  rename(`Number of Lines` = n)
+
+ron_lines |>
+  head()
+
+## Create Side-by-Side Boxplot ##
+
+p1 <- ron_lines |>
+  mutate(Season = as.character(Season)) |>
+  ggplot(aes(fill=Season,y=`Number of Lines`)) +
+  geom_boxplot() +
+  labs(x = "Seasons",
+       y = "Number of Lines",
+       title = "Ron Swanson's Number of Lines Per Episode") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank())
+
+```
+```{r,echo=F}
+p1
+```
+
+## Ron Swanson - Number of Lines Per Episode Per Season
+
+- As we can see, Ron had the most lines in a given episode in season `r ron_lines$Season[which.max(ron_lines$"Number of Lines")] `.
+
+\vskip 0.10 in
+
+- Ron had the fewest number of lines in a given episdoe in season `r ron_lines$Season[which.min(ron_lines$"Number of Lines")] `.
+
+\vskip 0.10 in
+
+- Ron's average number of lines per episode was `r round(mean(ron_lines$"Number of Lines"),2) `.
+
+## Ron Swanson - Average Number of Lines Per Episode Per Season
+
+```{r,echo=F,include=F}
+## Create Aggregated Dataset ##
+
+ron_avg_lines <- ron_lines |>
+  group_by(Season) |>
+  summarize(`Average Number of Lines` = round(mean(`Number of Lines`),2))
+
+ron_avg_lines |>
+  head()
+
+## Create Ordered, Horizontal Bar Chart ##
+
+p2 <- ron_avg_lines |>
+  mutate(Season = as.character(Season)) |>
+  ggplot(aes(x=`Average Number of Lines`,y=reorder(Season,`Average Number of Lines`),
+             fill=Season)) +
+  geom_bar(stat='identity') +
+  geom_text(aes(label=`Average Number of Lines`),color='white',hjust=1.5) +
+  labs(y="Seasons",
+       title="Ron's Average Number of Lines Per Season") +
+  theme_minimal() 
+
+```
+```{r,echo=F}
+p2
+```
+
+## Leslie Knope Word Clouds - Season 1
+
+```{r,echo=F,include=T}
+## Subset to just Leslie ##
+
+leslie <- pnr |>
+  filter(Character == "Leslie Knope")
+
+## Subset to Season 1 ##
+
+s1 <- leslie |>
+  filter(Season == 1)
+
+## Create Word Cloud for Season 1 ##
+
+library(stringr)
+library(janeaustenr)
+library(tidytext)
+library(wordcloud)
+
+data("stop_words")
+
+## Create Visualization ##
+
+s1 |>
+  select(Line) |>
+  unnest_tokens(word,Line) |>
+  anti_join(stop_words) |>
+  count(word) |>
+  with(wordcloud(word,n,max.words=25))
+```
+
+## Leslie Knope Word Clouds - Season 2
+
+```{r,echo=F}
+## Subset to Season 2 ##
+
+s2 <- leslie |>
+  filter(Season == 2)
+
+## Create Visualization ##
+
+s2 |>
+  select(Line) |>
+  unnest_tokens(word,Line) |>
+  anti_join(stop_words) |>
+  count(word) |>
+  with(wordcloud(word,n,max.words=25))
+```
+
+## Leslie Knope Word Clouds - Season 3
+
+```{r,echo=F}
+## Subset to Season 3 ##
+
+s3 <- leslie |>
+  filter(Season == 3)
+
+## Create Visualization ##
+
+s3 |>
+  select(Line) |>
+  unnest_tokens(word,Line) |>
+  anti_join(stop_words) |>
+  count(word) |>
+  with(wordcloud(word,n,max.words=25))
+```
+
+## Leslie Knope Word Clouds - Season 4
+
+```{r,echo=F}
+## Subset to Season 2 ##
+
+s4 <- leslie |>
+  filter(Season == 4)
+
+## Create Visualization ##
+
+s4 |>
+  select(Line) |>
+  unnest_tokens(word,Line) |>
+  anti_join(stop_words) |>
+  count(word) |>
+  with(wordcloud(word,n,max.words=25))
+```
+
+## Leslie Knope Word Clouds - Season 5
+
+```{r,echo=F}
+## Subset to Season 5 ##
+
+s5 <- leslie |>
+  filter(Season == 5)
+
+## Create Visualization ##
+
+s5 |>
+  select(Line) |>
+  unnest_tokens(word,Line) |>
+  anti_join(stop_words) |>
+  count(word) |>
+  with(wordcloud(word,n,max.words=25))
+```
+
+## Leslie Knope Word Clouds - Season 6
+
+```{r,echo=F}
+## Subset to Season 6 ##
+
+s6 <- leslie |>
+  filter(Season == 6)
+
+## Create Visualization ##
+
+s6 |>
+  select(Line) |>
+  unnest_tokens(word,Line) |>
+  anti_join(stop_words) |>
+  count(word) |>
+  with(wordcloud(word,n,max.words=25))
+```
+
+## Leslie Knope Word Clouds - Season 7
+
+```{r,echo=F}
+## Subset to Season 2 ##
+
+s7 <- leslie |>
+  filter(Season == 7)
+
+## Create Visualization ##
+
+s7 |>
+  select(Line) |>
+  unnest_tokens(word,Line) |>
+  anti_join(stop_words) |>
+  count(word) |>
+  with(wordcloud(word,n,max.words=25))
+```

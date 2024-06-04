@@ -1,0 +1,23 @@
+---
+title: "STAT 7130 - RMarkdown Presentations by Example"
+author: "Dr. Austin Brown"
+output: pdf_document
+header-includes:
+  - \pagenumbering{gobble}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+\textbf{INSTRUCTIONS:} For tonight's class, we are going to be going through an example of how to make RMarkdown slide presentations, like the ones you will be making for the final project (if you're presenting in class of course!). Tonight, we're going to be using the Parks and Rec (another one of my favorite TV shows of all time) dialogue dataset to perform some analyses similar to those you're working on for HW2. The goals of this analysis are:
+
+\vskip 0.25 in
+
+1. Create a vertical side-by-side boxplot showing Ron Swansons's number of lines per episode per season using color to differentiate between the seasons.
+2. Create an ordered, horizontal bar chart showing Ron Swansons's average number of lines per episode per season using color to differentiate between the seasons.
+3. Create word clouds to show the top 25 words spoken each season by Leslie Knope.
+
+\vskip 0.25 in
+
+Let's get started!
