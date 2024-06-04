@@ -1,0 +1,88 @@
+---
+title: "Controlling Table Output"
+author: "Dr. Austin Brown"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message=FALSE,warning=FALSE)
+```
+
+Besides `ggplot2` output, another common way of communicating the results of statistical analyses, whether descriptive or inferential, is through tables. Let's say we want to print out a table of the first 5 rows and 10 columns of the classic `mtcars` dataframe in our document.
+
+```{r}
+datasets::mtcars[1:5,1:10]
+```
+
+Notice that the output here looks exactly the same as what we would see if we ran this in the console. Okay, well this may be fine for internal or informal types of documents/presentations, but what if this table was to be included in a company-wide memo? We need the ability to make a more professional appearing table. Fortuantely, there's a function for that called `knitr::kable`. Let's check out how we can beautify that table from before.
+
+```{r}
+knitr::kable(
+  mtcars[1:5,1:10],
+  caption = "More Beautiful Car Data"
+)
+```
+
+This looks better! But the column names aren't super clear! Let's look at just the first four columns and see how we can change their names:
+
+\clearpage
+
+```{r,tidy=FALSE,echo=F}
+subcars <- mtcars[1:5,1:4]
+knitr::kable(
+  subcars,
+  col.names = c("Miles per Gallon","Number of Cylinders","Engine Displacement","Horsepower"),
+  row.names = F,
+  caption = "More Beautiful Car Data"
+)
+```
+
+There are lots of other packages which can help control aesthetic features of a table as well such as `DT` and `xtable` among many others. For example, with `DT`, we can create interactive tables when we render to HTML.
+
+\clearpage
+
+Now, besides just showing tables of raw data, let's say we wanted to present the mean, median, and standard deviations of penguin bill length across the species of penguins in a nice table. 
+
+```{r}
+library(tidyverse)
+summary_statistics <- palmerpenguins::penguins |>
+  dplyr::group_by(species) |>
+  dplyr::summarize(Mean = mean(bill_length_mm,na.rm=T),
+                   Median = median(bill_length_mm,na.rm=T),
+                   `Standard Deviation` = sd(bill_length_mm,na.rm=T))
+
+knitr::kable(
+  palmerpenguins::penguins |>
+  dplyr::group_by(species) |>
+  rstatix::get_summary_stats(bill_length_mm,type="common") |>
+  dplyr::select(species,mean,median,sd),
+  caption="Summary Stats via RStatix",
+  digits=4)
+
+knitr::kable(summary_statistics,
+             caption="Summary Statistics for Penguin Bill Length by Species",
+             digits = 4)
+```
+
+\newline
+
+Now suppose we wanted to run a simple linear regression to assess the relationship between penguin bill length and bill depth. Typically, the results of regression are presented in an ANOVA type of table:
+
+```{r}
+slr <- summary(lm(bill_length_mm~bill_depth_mm,data=palmerpenguins::penguins))
+knitr::kable(slr$coefficients)
+```
+
+Let's clean this up a bit! Typically, if we have really tiny p-values, instead of putting it in scientific notation, we just say "< 0.0001."
+
+```{r}
+coefs <- slr$coefficients
+pvals <- matrix(ifelse(coefs[,4] < 0.0001, "< 0.0001",coefs[,4]),ncol=1)
+coefs1 <- cbind(round(coefs[,-4],2),pvals)
+rownames(coefs1) <- c("Intercept","Bill Length (in mm)")
+knitr::kable(coefs1,
+             caption = "Results of Simple Linear Regression",
+             col.names = c("Estimate","Standard Error","Test Statistic","P-Value"),
+             row.names = T
+             )
+```

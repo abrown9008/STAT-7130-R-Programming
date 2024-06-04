@@ -1,0 +1,108 @@
+---
+title: "Introduction to RMarkdown/Source Quarto"
+author: "Dr. Austin Brown"
+institute: "Kennesaw State University"
+output: beamer_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Introduction
+
+- When running any sort of analysis, we generally have three main components:
+
+\vskip 0.25 in
+
+1. The Code
+2. The Output/Results
+3. The Presentation/Report
+    
+\vskip 0.25 in
+
+- Frustratingly at times, these are all separate files/documents that we try to simultaneously manage (e.g., saving graphs as .JPG and then having to import them into a Word or LaTeX file).
+
+## Introduction
+
+- I know I speak for more than just myself when I say that it can be a frustrating process, especially when you have a rather large report you're trying to compile.
+
+\vskip 0.10 in
+
+- Fortunately, there is a way to solve this problem by using a package built into RStudio called \texttt{RMarkdown}.
+    - Note, RMarkdown is essentially just the Source version of Quarto. The main difference between RMarkdown and Quarto is that Quarto can integrate multiple programming languages, like Python and SQL, whereas RMarkdown uses just one.
+
+## Introduction 
+
+- What is \texttt{RMarkdown}/Quarto? It is a way to keep your code, results, and script/narrative all in a single document which can be rendered (or knit more appropriately) to a specific file type, including:
+
+\vskip 0.10 in
+
+  1. Word
+  2. Powerpoint
+  3. PDF
+  4. HTML
+    
+\vskip 0.10 in
+
+- Okay, so what does the output look like? It looks like these very slides I've been using all semester, and I am using the basic Beamer output from LaTeX. 
+
+
+## Introduction
+
+- A \texttt{RMarkdown} file, like regular R files, is a plain-text document except it has the extension, .RMD. 
+    - Quarto files have the extension .QMD.
+
+\vskip 0.25 in
+
+- Open the "Example1.RMD" file in the Week 7 D2L folder to see an example.
+
+## R Markdown Basics
+
+- All \texttt{RMarkdown} files (and Quarto source files) contain the three same pieces of information:
+
+\vskip 0.25 in
+
+  1. A YAML header
+  2. Chunks of R code 
+  3. Text mixed with simple text formatting like *italics* and **bold**
+  
+\vskip 0.25 in
+
+- This is the same as \textit{italics} and \textbf{bold}. The other super nice thing about \texttt{RMarkdown} is that if you were a LaTeX user before (like me), you can still run LaTeX style syntax inside of \texttt{RMarkdown} and it renders the same as the traditional, markdown style syntax (I prefer it for manually creating tables).
+
+## R Markdown Basics
+
+- When we open up an .RMD file, what we're effectively looking at is a notebook type of layout. 
+
+\vskip 0.10 in
+
+- We have our text/commentary interwoven (another not-so-subtle knitting reference) with the R Code.
+
+\vskip 0.10 in
+
+- What is so handy about this layout is that we can run code chunks independently and have the results render inside of the script/RMD window before \textit{knitting} or compiling the document into whatever file type you want. 
+
+\vskip 0.10 in
+
+- This is especially useful when compiling large presentation/documents with lots of analyses or computationally-heavy analyses as knitting to file executes the entire script start to finish (although there is a way around this problem called "caching").
+
+## R Markdown Basics
+
+- As far as formatting goes, we have lots options available to us. I would recommend checking out the cheatsheet for \texttt{RMarkdown}, but just as an overview, we can do things like:
+
+\vskip 0.10 in
+
+- *italicize* or **bold** or denote `code syntax` or use superscripts^2^, subscripts~2~ as well as lists (as you've seen) and even hyperlinks <http://datascience.kennesaw.edu>. 
+
+## R Markdown Basics
+
+- Another super handy aspect of \texttt{RMarkdown} is the ability to use LaTeX style math syntax to output formulas, equations, Greek letters, or what have you. 
+
+\vskip 0.10 in
+
+- For example, Euler's number $e$, can be expressed as an infinite series as well as the limit of a sequence:
+
+$$ e = \sum_{j=0}^{\infty}\frac{1^j}{j!} $$
+
+$$ e = \lim_{n\rightarrow\infty}\bigg(1 + \frac{1}{n}\bigg)^{n} $$

@@ -1,0 +1,67 @@
+---
+title: "Code Chunk Options"
+author: "Dr. Austin Brown"
+output: html_document
+---
+
+Let's take a look at some different options we have with respect to code chunks! Let's say we want to generate the penguin plot. We can create it in an `R Markdown` document quite easily:
+
+```{r}
+library(tidyverse)
+library(palmerpenguins)
+palmerpenguins::penguins |>
+  ggplot(aes(bill_length_mm,bill_depth_mm)) +
+  geom_point()
+```
+
+Okay here we notice several things. First, when we attach the `tidyverse` package, we get the messages output to the knitted document as well. Additionally, we also get the warning messages about the points being omitted. Let's keep that in mind.  
+
+What if we want to simply include code, but don't want it to run? We can change the default setting in our code chunk from `eval=TRUE` to `eval=FALSE`.
+
+```{r,eval=FALSE}
+## This won't execute ##
+palmerpenguins::penguins |>
+  ggplot(aes(bill_length_mm,bill_depth_mm)) +
+  geom_point()
+```
+
+If we wanted to repress the code and repress the output, which might be ideal if you were creating functions or attaching libraries, we can change the default chunk option `include=TRUE` to `include=FALSE`. The code will still execute, but nothing will appear in your document.
+
+```{r,include=FALSE}
+## This will execute but won't render ##
+p <- palmerpenguins::penguins |>
+  ggplot(aes(bill_length_mm,bill_depth_mm)) +
+  geom_point()
+```
+```{r}
+p
+```
+
+Quite commonly, when we're giving professional presentations, we might not want to include the code, but for sure want the output. Here, we can change the default chunk option `echo=TRUE` to `echo=FALSE`.
+
+```{r,echo=FALSE}
+## This will execute but the code won't render ##
+palmerpenguins::penguins |>
+  ggplot(aes(bill_length_mm,bill_depth_mm)) +
+  geom_point()
+```
+
+The other two main chunk code options I utilize all the time are `message = FALSE` and `warning = FALSE`. What these do is repress, you guessed it, the warning messages and other messages the appear in the console. So remember how when we attached the `tidyverse` package that we got that output the typically prints to the console? You likely won't want that in a professional presentation!
+
+```{r,echo=TRUE,warning=FALSE,message=FALSE}
+## No Tidyverse Messages or Warning Messages will Appear! ##
+library(tidyverse)
+palmerpenguins::penguins |>
+  ggplot(aes(bill_length_mm,bill_depth_mm)) +
+  geom_point()
+```
+
+There are lots of other chunk options out there for controlling various aspects of your output (including things like figure captions, size of the output, etc.). For a full list, check out <https://rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf?_ga=2.234246238.1518898826.1600885588-865726554.1588115827>.  
+
+Now, depending on your application, you may always use the same code chunk options in a single `R Markdown` file. So going through each code chunk and specifying the options you want can increase the amount of time spent on the  analysis/write-up itself. To get around this, we can specify global options at the onset of our markdown file. By default, if you open a new `R Markdown` file in RStudio, you'll get a global code chunk code in the initial document:
+
+```{r setup,echo=TRUE,eval=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+So for me, because I always use `message=FALSE,warning=FALSE`, I just specify them up here in this code so I don't have to repeatedly do it for each code chunk (pretty handy!).
